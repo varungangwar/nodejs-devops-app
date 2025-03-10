@@ -1,0 +1,44 @@
+name: Node.js CI/CD Pipeline
+
+# Trigger the workflow on push to the main branch
+on:
+  push:
+    branches:
+      - main
+
+# Define jobs to run
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest  # Use a Ubuntu runner
+
+    steps:
+      # Step 1: Checkout the code from the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'  # Specify the Node.js version
+
+      # Step 3: Install dependencies
+      - name: Install dependencies
+        run: npm install
+
+      # Step 4: Run tests (if you have a test script in package.json)
+      - name: Run tests
+        run: npm test
+
+      # Step 5: Build Docker image
+      - name: Build Docker image
+        run: docker build -t nodejs-devops-app .
+
+      # Step 6: Log in to Docker Hub and push the image
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Push Docker image to Docker Hub
+        run: |
+          docker tag nodejs-devops-app ${{ secrets.DOCKER_USERNAME }}/nodejs-devops-app:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/nodejs-devops-app:latest
